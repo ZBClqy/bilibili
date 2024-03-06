@@ -1,0 +1,153 @@
+<template>
+    <van-sticky>
+        <AppHeader />
+        <van-barrage v-model="barrageList" :auto-play="false" ref="barrageRef">
+            <video controls class="video-play" ref="videoRef" :poster="detail?.pic" @play="onPlay" @pause="onPause"
+                src="https://video.pearvideo.com/mp4/third/20230706/cont-1784445-12033417-151259-hd.mp4"></video>
+        </van-barrage>
+    </van-sticky>
+    <div class="info">
+        <h1 class="title-text">{{ detail?.title }}</h1>
+        <div class="body">
+            <div class="author">
+                <img class="avatar" :src="detail?.author.face" />
+                <span class="name">{{ detail?.author.name }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="relate">
+        <h3 class="relate-title">相关推荐</h3>
+        <div class="relate-list">
+            <van-list v-model:loading="loading" :finished="finished" finished-text="去 bilibili App 看更多" @load="onLoad">
+                <div class="video-list">
+                    <AppVideo v-for="item in list" :key="item.bvid" :item="item" />
+                </div>
+            </van-list>
+        </div>
+    </div>
+</template>
+
+<script setup>
+
+const { params } = useRoute()
+
+const { data: detail } = useFetch(`/api/video/${params.id}`)
+
+const barrageList = ref([
+    { id: 100, text: '轻量' },
+    { id: 101, text: '可定制的' },
+    { id: 102, text: '移动端' },
+    { id: 103, text: 'Vue' },
+    { id: 104, text: '组件库' },
+    { id: 105, text: 'VantUI' },
+    { id: 106, text: '666' },
+])
+
+const barrageRef = ref()
+
+useSeoMeta({
+    title: `${detail.value?.title} - 哔哩哔哩 (゜-゜)つロ 干杯~-bilibili官方`,
+})
+
+const onPlay = () => {
+    barrageRef.value?.play()
+}
+
+const onPause = () => {
+    barrageRef.value?.pause()
+}
+
+const { data: videoList } = await useFetch('/api/video')
+
+const loading = ref(false)
+const finished = ref(false)
+const list = ref([])
+const page = ref(1)
+const pageSize = ref(20)
+
+const onLoad = () => {
+    loading.value = true
+    setTimeout(() => {
+        list.value.push(...videoList.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value))
+        loading.value = false
+        if (videoList.value.length == list.value.length) {
+            finished.value = true
+        }
+        page.value++
+    }, 2000)
+
+}
+
+onLoad()
+</script>
+
+<style lang="scss" scoped>
+.video-list {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px 5px;
+}
+
+.video-play {
+    width: 100vw;
+    height: auto;
+    object-fit: contain;
+    background-color: #fff;
+}
+
+.info {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+
+    .title-text {
+        font-size: 16px;
+        font-weight: normal;
+    }
+
+    .body {
+        display: flex;
+        margin-top: 20px;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .author {
+        display: flex;
+        align-items: center;
+
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+        }
+
+        .name {
+            margin-left: 10px;
+            font-size: 14px;
+        }
+    }
+}
+
+.relate {
+    width: 100%;
+
+    .relate-title {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        font-weight: normal;
+        padding: 0 10px;
+        color: #333;
+    }
+
+    .relate-list {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0 5px;
+        align-items: center;
+        justify-content: center;
+    }
+}
+</style>
